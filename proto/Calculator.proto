@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package calculator;
+option go_package = "proto";
+
+message Req {
+    map<string, string> params = 1;
+}
+
+message Rep {
+    map<string, string> result = 1;
+}
+
+service Calculate {
+    rpc division (stream Req) returns (stream Rep) {}
+}
