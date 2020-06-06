@@ -2,9 +2,13 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	pb "secure-grpc/proto"
@@ -17,9 +21,28 @@ const (
 )
 
 func Request() {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(serverAddr, opts...)
+	certificate, err := tls.LoadX509KeyPair("client.crt", "client.key")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	certPool := x509.NewCertPool()
+	ca, err := ioutil.ReadFile("ca.crt")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if ok := certPool.AppendCertsFromPEM(ca); !ok {
+		log.Fatal("append err!")
+	}
+
+	creds := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{certificate},
+		RootCAs: certPool,
+		ServerName: "server.io",
+	})
+
+	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(creds))
 
 	if err != nil {
 		log.Printf("client gRPC dial failed. %v\n", err)
