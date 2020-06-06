@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"log"
 	"net"
 	"secure-grpc/client"
@@ -12,14 +13,18 @@ import (
 )
 
 func main() {
+	creds, err := credentials.NewServerTLSFromFile("server.crt", "server.key")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", 4322))
 	if err != nil {
 		log.Printf("listen port failed. %v\n", err)
 		return
 	}
 
-	var opts []grpc.ServerOption
-	grpcServer := grpc.NewServer(opts...)
+	grpcServer := grpc.NewServer(grpc.Creds(creds))
 	pb.RegisterCalculateServer(grpcServer, &server.CalculatorServer{})
 
 	go func() {

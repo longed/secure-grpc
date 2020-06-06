@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"io"
 	"log"
-	"os"
 	pb "secure-grpc/proto"
 	"strconv"
 	"time"
@@ -17,13 +17,15 @@ const (
 )
 
 func Request() {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(serverAddr, opts...)
+	creds, err := credentials.NewClientTLSFromFile("server.crt", "longed.top")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	conn, err := grpc.Dial(serverAddr, grpc.WithTransportCredentials(creds))
 
 	if err != nil {
-		log.Printf("client gRPC dial failed. %v\n", err)
-		os.Exit(1)
+		log.Fatal("client gRPC dial failed. %v\n", err)
 	}
 	defer conn.Close()
 
